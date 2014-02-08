@@ -1,8 +1,8 @@
 package wkde
 
 import (
-    "github.com/zpz/matrix.go/dense"
-    "github.com/zpz/stats.go"
+	"github.com/zpz/matrix.go/dense"
+	"github.com/zpz/stats.go"
 )
 
 // use_float_slice takes a slice x and required length,
@@ -34,14 +34,12 @@ func use_dense(x *dense.Dense, r, c int) *dense.Dense {
 	return x
 }
 
-
 // clone_floats returns a clone of the input slice.
 func clone_floats(x []float64) []float64 {
-    v := make([]float64, len(x))
-    copy(v, x)
-    return v
+	v := make([]float64, len(x))
+	copy(v, x)
+	return v
 }
-
 
 // pick_floats returns a subslice with the elements
 // at the specified indices.
@@ -72,29 +70,28 @@ func exclude(n int, index []int) []int {
 	return idx[:k]
 }
 
-
 func subcov_xx(
-    mat *dense.Dense,
-    idx []int,
-    out *dense.Dense) *dense.Dense {
-    p := len(idx)
-    out = use_dense(out, p, p)
-    for i, j := range idx {
-        pick_floats(mat.RowView(j), idx, out.RowView(i))
-    }
-    return out
+	mat *dense.Dense,
+	idx []int,
+	out *dense.Dense) *dense.Dense {
+	p := len(idx)
+	out = use_dense(out, p, p)
+	for i, j := range idx {
+		pick_floats(mat.RowView(j), idx, out.RowView(i))
+	}
+	return out
 }
 
 func subcov_xy(
-    mat *dense.Dense,
-    x_idx, y_idx []int,
-    out *dense.Dense) *dense.Dense {
-    px, py := len(x_idx), len(y_idx)
-    out = use_dense(out, px, py)
-    for i, j := range x_idx {
-        pick_floats(mat.RowView(j), y_idx, out.RowView(i))
-    }
-    return out
+	mat *dense.Dense,
+	x_idx, y_idx []int,
+	out *dense.Dense) *dense.Dense {
+	px, py := len(x_idx), len(y_idx)
+	out = use_dense(out, px, py)
+	for i, j := range x_idx {
+		pick_floats(mat.RowView(j), y_idx, out.RowView(i))
+	}
+	return out
 }
 
 // xtAy computes the scalar value that is
@@ -108,4 +105,11 @@ func xtAy(x []float64, A *dense.Dense, y []float64) float64 {
 		v += stats.FloatDot(A.RowView(i), y) * x[i]
 	}
 	return v
+}
+
+func fill_float(x []float64, v float64) []float64 {
+	for i := range x {
+		x[i] = v
+	}
+	return x
 }

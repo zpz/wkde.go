@@ -24,7 +24,6 @@ const (
 	FreeCov
 )
 
-
 // Normix defines a normal mixture distribution.
 type Normix struct {
 	kind NormixKind
@@ -37,7 +36,7 @@ type Normix struct {
 	// Each col is one dimension.
 	mean *dense.Dense
 
-    // Cov matrix for each mixture component.
+	// Cov matrix for each mixture component.
 	cov []*dense.Dense
 
 	// If kind is SharedCov, cov has length 1, cov_scale is nil.
@@ -66,25 +65,24 @@ func NewNormix(n_dim, n_mix int, kind NormixKind) *Normix {
 	switch kind {
 	case SharedCov:
 		mix.cov = make([]*dense.Dense, 1)
-        mix.cov[0] = dense.NewDense(n_dim, n_dim)
+		mix.cov[0] = dense.NewDense(n_dim, n_dim)
 	case ScaledCov:
 		// Usually this is not used when n_dim is 1,
 		// but it is allowed.
 		mix.cov = make([]*dense.Dense, 1)
-        mix.cov[0] = dense.NewDense(n_dim, n_dim)
+		mix.cov[0] = dense.NewDense(n_dim, n_dim)
 		mix.cov_scale = make([]float64, n_mix)
 	case FreeCov:
 		mix.cov = make([]*dense.Dense, n_mix)
-        for i := range mix.cov {
-            mix.cov[i] = dense.NewDense(n_dim, n_dim)
-        }
+		for i := range mix.cov {
+			mix.cov[i] = dense.NewDense(n_dim, n_dim)
+		}
 	default:
 		panic("NewNormix: unrecognized value for kind")
 	}
 
 	return &mix
 }
-
 
 // dim returns the number of dimensions of the normal mixture distribution.
 func (mix *Normix) Dim() int {
@@ -97,9 +95,6 @@ func (mix *Normix) Size() int {
 	return len(mix.logweight)
 }
 
-
-
-
 // Pooled mean and variance of a random vector represented by a
 // mixture---
 //   Let there be 'n' mixtures for a k-vector
@@ -111,13 +106,12 @@ func (mix *Normix) Size() int {
 //
 // This function does not assume normality of the mixtures.
 
-
 // Density computes the pdf of each row of x in the Normix mix.
 func (mix *Normix) Density(x *dense.Dense, out []float64) []float64 {
 	ndim := mix.Dim()
 	if x.Cols() != ndim {
-        panic("Wrong shape for input x")
-    }
+		panic("Wrong shape for input x")
+	}
 
 	nx := x.Rows()
 
@@ -207,8 +201,8 @@ func (mix *Normix) Marginal(dims []int) *Normix {
 	kind := mix.kind
 
 	if ndim <= mix.Dim() {
-        panic("too many elements in dims")
-    }
+		panic("too many elements in dims")
+	}
 
 	// TODO: check that dims does not contain duplicate elements.
 
@@ -225,10 +219,10 @@ func (mix *Normix) Marginal(dims []int) *Normix {
 	// Get out.cov.
 	if kind == FreeCov {
 		for imix := 0; imix < nmix; imix++ {
-            subcov_xx(mix.cov[imix], dims, out.cov[imix])
+			subcov_xx(mix.cov[imix], dims, out.cov[imix])
 		}
 	} else {
-        subcov_xx(mix.cov[0], dims, out.cov[0])
+		subcov_xx(mix.cov[0], dims, out.cov[0])
 	}
 
 	// Get out.cov_scale.
@@ -254,13 +248,13 @@ func (mix *Normix) Conditional(
 	// Use 0 if you don't know better.
 ) *Normix {
 
-    // TODO: add a 'mean_only' argument to do mean only
-    // and ignore cov. This is an efficiency measure b/c
-    // in a particular use case only the conditional means are needed.
+	// TODO: add a 'mean_only' argument to do mean only
+	// and ignore cov. This is an efficiency measure b/c
+	// in a particular use case only the conditional means are needed.
 
 	if len(data) != len(dims) {
-        panic("dimensionality mismatch")
-    }
+		panic("dimensionality mismatch")
+	}
 
 	//==================================================
 	// Calculate likelihoods of the data in its marginal
@@ -290,7 +284,7 @@ func (mix *Normix) Conditional(
 
 		if len(idx_keep) < len(logwt) {
 			logwt = pick_floats(logwt, idx_keep, nil)
-            lse := stats.LogSumExp(logwt)
+			lse := stats.LogSumExp(logwt)
 			total_wt := math.Exp(lse)
 
 			log.Println("keeping",
@@ -341,8 +335,8 @@ func (mix *Normix) Conditional(
 
 			pick_floats(mu, dims_y, mu_y)
 
-            subcov_xx(sigma, dims_y, sigma_y)
-            subcov_xy(sigma, dims_x, dims_y, sigma_xy)
+			subcov_xx(sigma, dims_y, sigma_y)
+			subcov_xy(sigma, dims_x, dims_y, sigma_xy)
 
 			conditional_normal(
 				data, mu_y,
@@ -353,12 +347,12 @@ func (mix *Normix) Conditional(
 				mu_x[i] += mu[idx]
 			}
 
-            for i, ii := range dims_x {
-                for j, jj := range dims_x {
-                    v := sigma_x.Get(i, j)
-                    sigma_x.Set(i, j, v + sigma.Get(ii, jj))
-                }
-            }
+			for i, ii := range dims_x {
+				for j, jj := range dims_x {
+					v := sigma_x.Get(i, j)
+					sigma_x.Set(i, j, v+sigma.Get(ii, jj))
+				}
+			}
 		}
 
 	} else {
@@ -369,8 +363,8 @@ func (mix *Normix) Conditional(
 		sigma := mix.cov[0]
 		sigma_x := mix_x.cov[0]
 
-        subcov_xx(sigma, dims_y, sigma_y)
-        subcov_xy(sigma, dims_x, dims_y, sigma_xy)
+		subcov_xx(sigma, dims_y, sigma_y)
+		subcov_xy(sigma, dims_x, dims_y, sigma_xy)
 
 		mu_x_delta := make([]float64, n_x)
 
@@ -382,12 +376,12 @@ func (mix *Normix) Conditional(
 		// and the new value is useful below.
 		A := sigma_xy
 
-        for i, ii := range dims_x {
-            for j, jj := range dims_x {
-                v := sigma_x.Get(i, j)
-                sigma_x.Set(i, j, v + sigma.Get(ii, jj))
-            }
-        }
+		for i, ii := range dims_x {
+			for j, jj := range dims_x {
+				v := sigma_x.Get(i, j)
+				sigma_x.Set(i, j, v+sigma.Get(ii, jj))
+			}
+		}
 
 		mu_y := make([]float64, n_y)
 
@@ -419,8 +413,8 @@ func (mix *Normix) density_stats(x *dense.Dense, out *dense.Dense) *dense.Dense 
 	nx := x.Rows()
 
 	if x.Cols() != ndim {
-        panic("input x has wrong shape")
-    }
+		panic("input x has wrong shape")
+	}
 	out = use_dense(out, nmix, nx)
 
 	if ndim == 1 {
@@ -454,7 +448,6 @@ func (mix *Normix) density_stats(x *dense.Dense, out *dense.Dense) *dense.Dense 
 		return out
 	}
 
-
 	if mix.kind == FreeCov {
 		for imix := 0; imix < nmix; imix++ {
 			mvn := stats.NewMVN(mix.mean.RowView(imix), mix.cov[imix])
@@ -472,7 +465,7 @@ func (mix *Normix) density_stats(x *dense.Dense, out *dense.Dense) *dense.Dense 
 			dense.Copy(xxview, x)
 			for row := 0; row < nx; row++ {
 				stats.FloatSubtract(xxview.RowView(row),
-                    mix.mean.RowView(imix), xxview.RowView(row))
+					mix.mean.RowView(imix), xxview.RowView(row))
 			}
 		}
 
@@ -483,20 +476,20 @@ func (mix *Normix) density_stats(x *dense.Dense, out *dense.Dense) *dense.Dense 
 				out.SetData(mvn.Density(xx, nil))
 			}
 		} else { // ScaledCov
-            cov_mat := mix.cov[0]
-            chol, ok := dense.Chol(cov_mat)
-            if !ok {
-                panic("Cholesdky failed on cov matrix")
-            }
-            cov_inv := chol.Inv(nil)
-            cov_det := chol.Det()
+			cov_mat := mix.cov[0]
+			chol, ok := dense.Chol(cov_mat)
+			if !ok {
+				panic("Cholesdky failed on cov matrix")
+			}
+			cov_inv := chol.Inv(nil)
+			cov_det := chol.Det()
 
-            // Squared Mahalanobis distance.
-            nxx := xx.Rows()
-            dist := make([]float64, nxx)
-            for i := 0; i < nxx; i++ {
-                dist[i] = xtAy(xx.RowView(i), cov_inv, xx.RowView(i))
-            }
+			// Squared Mahalanobis distance.
+			nxx := xx.Rows()
+			dist := make([]float64, nxx)
+			for i := 0; i < nxx; i++ {
+				dist[i] = xtAy(xx.RowView(i), cov_inv, xx.RowView(i))
+			}
 
 			for imix := 0; imix < nmix; imix++ {
 				res := out.RowView(imix)
@@ -604,18 +597,17 @@ func lose_weight(
 	return idx
 }
 
-
 func conditional_normal(
 	y []float64, // data
 	mu_y []float64, // mean
 	sigma_yy, sigma_xy *dense.Dense, // cov_yy, cov_xy
 	A *dense.Dense, // workspace; if nil, sigma_xy will be overwritten
 	mu_x_delta []float64,
-    sigma_xx_delta *dense.Dense,
+	sigma_xx_delta *dense.Dense,
 	// Conditional mean of x is original mean of x
 	// plus mu_x_delta;
 	// conditional cov of x is original cov of x
-    // plus sigma_xx_delta.
+	// plus sigma_xx_delta.
 ) {
 	// mu_{x|y} = mu_x + S_{xy} Inv(S_{yy}) (y - mu_y)
 	// S_{x|y} = S_{xx} - S_{xy} Inv(S_{yy}) S_{yx}
@@ -623,21 +615,21 @@ func conditional_normal(
 	dimx := sigma_xy.Rows()
 	dimy := len(mu_y)
 	if sigma_yy.Rows() != dimy ||
-			sigma_yy.Cols() != dimy ||
-			sigma_xy.Cols() != dimy ||
-			len(y) != dimy ||
-			len(mu_x_delta) != dimx ||
-			sigma_xx_delta.Rows() != dimx ||
-            sigma_xx_delta.Cols() != dimx {
-                panic("dimensions mismatch")
-    }
+		sigma_yy.Cols() != dimy ||
+		sigma_xy.Cols() != dimy ||
+		len(y) != dimy ||
+		len(mu_x_delta) != dimx ||
+		sigma_xx_delta.Rows() != dimx ||
+		sigma_xx_delta.Cols() != dimx {
+		panic("dimensions mismatch")
+	}
 
 	if A == nil {
 		A = sigma_xy
 	} else {
 		if A.Rows() != dimx || A.Cols() != dimy {
 			panic("A have wrong shape")
-        }
+		}
 		dense.Copy(A, sigma_xy)
 	}
 
@@ -657,11 +649,11 @@ func conditional_normal(
 			// Need the element (row, col) of A %*% sigma_yx,
 			// which is the dot product of the row-th row of A
 			// and the col-th row of sigma_xy.
-            v := -stats.FloatDot(A.RowView(row), sigma_xy.RowView(col))
+			v := -stats.FloatDot(A.RowView(row), sigma_xy.RowView(col))
 			sigma_xx_delta.Set(row, col, v)
-            if row > col {
-                sigma_xx_delta.Set(col, row, v)
-            }
+			if row > col {
+				sigma_xx_delta.Set(col, row, v)
+			}
 		}
 	}
 }
