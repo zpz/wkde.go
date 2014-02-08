@@ -1,10 +1,15 @@
 package wkde
 
-// use_slice takes a slice x and required length,
+import (
+    "github.com/zpz/matrix.go/dense"
+    "github.com/zpz/stats.go"
+)
+
+// use_float_slice takes a slice x and required length,
 // returns x if it is of correct length,
 // returns a newly created slice if x is nil,
 // and panic if x is non-nil but has wrong length.
-func use_slice(x []float64, n int) []float64 {
+func use_float_slice(x []float64, n int) []float64 {
 	if x == nil {
 		return make([]float64, n)
 	}
@@ -18,9 +23,9 @@ func use_slice(x []float64, n int) []float64 {
 // returns x if it is of correct shape,
 // returns a newly created Dense if x is nil,
 // and panic if x is non-nil but has wrong shape.
-func use_dense(x *Dense, r, c int) *Dense {
+func use_dense(x *dense.Dense, r, c int) *dense.Dense {
 	if x == nil {
-		return NewDense(r, c)
+		return dense.NewDense(r, c)
 	}
 	m, n := x.Dims()
 	if m != r || n != c {
@@ -73,7 +78,7 @@ func subcov_xx(
     idx []int,
     out *dense.Dense) *dense.Dense {
     p := len(idx)
-    out = use_dense(p, p)
+    out = use_dense(out, p, p)
     for i, j := range idx {
         pick_floats(mat.RowView(j), idx, out.RowView(i))
     }
@@ -85,9 +90,22 @@ func subcov_xy(
     x_idx, y_idx []int,
     out *dense.Dense) *dense.Dense {
     px, py := len(x_idx), len(y_idx)
-    out = use_dense(px, py)
+    out = use_dense(out, px, py)
     for i, j := range x_idx {
         pick_floats(mat.RowView(j), y_idx, out.RowView(i))
     }
     return out
+}
+
+// xtAy computes the scalar value that is
+//  x^t * A * y
+// where 'x' and 'y' are treated as column vectors,
+// and '*' is matrix multiplication.
+func xtAy(x []float64, A *dense.Dense, y []float64) float64 {
+	v := 0.0
+	k := len(x)
+	for i := 0; i < k; i++ {
+		v += stats.FloatDot(A.RowView(i), y) * x[i]
+	}
+	return v
 }
